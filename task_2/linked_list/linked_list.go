@@ -1,57 +1,68 @@
-package main
+package linked_list
 
 import (
 	"fmt"
+	"reflect"
+	"time"
 )
 
 type Node struct {
 	value interface{}
-	id    int
 	next  *Node
 }
 
-// ItemLinkedList the linked list
+// ItemLinkedList the linked_list
 type ItemLinkedList struct {
 	head *Node
 	size int
 }
 
+func NewList(val ...interface{}) (ItemLinkedList, error) {
+	var ll ItemLinkedList
+	for _, v := range val {
+		e := ll.Insert(v)
+		if e != nil {
+			return ItemLinkedList{}, e
+		}
+	}
+	return ll, nil
+}
+
 //Insert will put a value in list
 //s interface{} will be the value
-func (ll *ItemLinkedList) Insert(s interface{}) {
+func (ll *ItemLinkedList) Insert(val interface{}) error {
 	addNode := Node{
-		value: s,
+		value: val,
 		next:  nil,
 	}
 	if ll.head == nil {
 		ll.head = &addNode
 	} else {
+		currentType := reflect.TypeOf(ll.head.value)
+		addType := reflect.TypeOf(val)
+		if currentType != addType {
+			return fmt.Errorf("types don`t equals %s and %s", currentType, addType)
+		}
 		addNode.next = ll.head
 		ll.head = &addNode
-
-		node := ll.head
-		i := 0
-		for node.next != nil {
-			node.id = i
-			node = node.next
-			i++
-		}
-		if node.next == nil {
-			node.id = i
-		}
 	}
 	ll.size++
+	return nil
 }
 
 //Deletion removes a value from the top of the list
-func (ll *ItemLinkedList) Deletion() {
-	ll.head = ll.head.next
-	ll.size--
+func (ll *ItemLinkedList) Deletion() error {
+	if ll.size > 0 {
+		ll.head = ll.head.next
+		ll.size--
+		return nil
+	}
+	return fmt.Errorf("list if empty")
 }
 
 //String return string of Node
 func (n Node) String() string {
-	return fmt.Sprintf("id: %d val: %s\n", n.id, n.value)
+	return fmt.Sprintf("val: %s\n", n.value)
 }
 
 //Display print elements of list
@@ -59,49 +70,53 @@ func (ll *ItemLinkedList) Display() {
 	node := ll.head
 	fmt.Println("------Start list")
 	for node.next != nil {
-		fmt.Printf("id: %d val: %s\n", node.id, node.value)
+		fmt.Printf("val: %s\n", node.value)
 		node = node.next
 	}
-	fmt.Printf("id: %d val: %s\n", node.id, node.value)
+	fmt.Printf("val: %s\n", node.value)
 	fmt.Println("------End list")
 }
 
 //Search find elements by id
 //id element`s id
-func (ll *ItemLinkedList) Search(id int) Node {
+func (ll *ItemLinkedList) Search(id int) (Node, error) {
 	node := ll.head
-	for {
-		if node.id == id {
-			return *node
-		}
-		if node.next == nil {
-			return Node{}
+	for i := 0; i < ll.size; i++ {
+		if i == id {
+			return *node, nil
 		}
 		node = node.next
 	}
+	return Node{}, fmt.Errorf("id not found")
 }
 
 //Delete remove elements by id
 //id element`s id
-func (ll *ItemLinkedList) Delete(id int) {
+func (ll *ItemLinkedList) Delete(id int) error {
 	node := ll.head
-	for {
-		if node.id == id {
+	for i := 0; i < ll.size; i++ {
+		if i == id {
 			ll.head = node.next
 			ll.size--
-			break
+			return nil
 		}
-		if node.next.id == id {
+		if i+1 == id && i+1 < ll.size {
 			node.next = node.next.next
 			ll.size--
-			break
+			return nil
 		}
 		node = node.next
 	}
+	return fmt.Errorf("id not found %d", id)
 }
 
 //Sort sort elements
-func (ll *ItemLinkedList) Sort() {
+func (ll *ItemLinkedList) Sort() error {
+
+	if ll.size < 2 {
+		return fmt.Errorf("not enough elements")
+	}
+	start := time.Now()
 	for i := 1; i < ll.size; i++ {
 		currentNode := ll.head
 		prevNode := ll.head
@@ -127,29 +142,13 @@ func (ll *ItemLinkedList) Sort() {
 
 		currentNode = currentNode.next
 	}
+	elapsed := time.Since(start).Seconds()
+	fmt.Println(elapsed)
+	return nil
 }
 
 //getValue returns a value of the type
 //only strings
 func (n *Node) getValue() string {
-	switch str := n.value.(type) {
-	case string:
-		return str
-	}
-	return ""
-}
-
-func main() {
-	var t ItemLinkedList
-	t.Insert("1")
-	t.Insert("2")
-	t.Insert("3")
-	t.Insert("4")
-	t.Insert("5")
-
-	t.Deletion()
-	t.Delete(1)
-	t.Sort()
-	t.Display()
-
+	return fmt.Sprintf(n.value.(string))
 }
